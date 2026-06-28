@@ -375,7 +375,14 @@ def make_salary_slip(
 	for_preview: int = 0,
 	lwp_days_corrected: float | None = None,
 ) -> str | Document:
-	frappe.has_permission("Salary Structure", "read", source_name, throw=True)
+	if not frappe.has_permission("Salary Structure", "read", source_name):
+		if for_preview and employee:
+			employee_user = frappe.db.get_value("Employee", employee, "user_id")
+			if not employee_user or employee_user != frappe.session.user:
+				frappe.throw(_("Not permitted"), frappe.PermissionError)
+		else:
+			frappe.throw(_("Not permitted"), frappe.PermissionError)
+
 	def postprocess(source, target):
 		if employee:
 			target.employee = employee
